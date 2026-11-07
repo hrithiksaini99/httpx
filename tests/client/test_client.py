@@ -460,3 +460,27 @@ def test_client_decode_text_using_explicit_encoding():
         assert response.reason_phrase == "OK"
         assert response.encoding == "ISO-8859-1"
         assert response.text == text
+
+
+def test_preloaded_response_elapsed():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"message": "ok"})
+
+    transport = httpx.MockTransport(handler)
+    with httpx.Client(transport=transport) as client:
+        response = client.get("http://testserver/")
+        assert response.is_closed is True
+        assert isinstance(response.elapsed, timedelta)
+        assert response.elapsed >= timedelta(0)
+
+
+def test_preloaded_response_custom_elapsed_preserved():
+    def handler(request: httpx.Request) -> httpx.Response:
+        resp = httpx.Response(200, content=b"ok")
+        resp.elapsed = timedelta(seconds=2.5)
+        return resp
+
+    transport = httpx.MockTransport(handler)
+    with httpx.Client(transport=transport) as client:
+        response = client.get("http://testserver/")
+        assert response.elapsed == timedelta(seconds=2.5)

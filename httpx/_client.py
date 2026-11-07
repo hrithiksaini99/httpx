@@ -1019,6 +1019,9 @@ class Client(BaseClient):
         response.stream = BoundSyncStream(
             response.stream, response=response, start=start
         )
+        if response.is_closed and not hasattr(response, "_elapsed"):
+            elapsed = time.perf_counter() - start
+            response.elapsed = datetime.timedelta(seconds=elapsed)
         self.cookies.extract_cookies(response)
         response.default_encoding = self._default_encoding
 
@@ -1734,6 +1737,9 @@ class AsyncClient(BaseClient):
         response.stream = BoundAsyncStream(
             response.stream, response=response, start=start
         )
+        if response.is_closed and not hasattr(response, "_elapsed"):
+            elapsed = time.perf_counter() - start
+            response.elapsed = datetime.timedelta(seconds=elapsed)
         self.cookies.extract_cookies(response)
         response.default_encoding = self._default_encoding
 

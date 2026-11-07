@@ -373,3 +373,16 @@ async def test_server_extensions(server):
         response = await client.get(url)
     assert response.status_code == 200
     assert response.extensions["http_version"] == b"HTTP/1.1"
+
+
+@pytest.mark.anyio
+async def test_async_preloaded_response_elapsed():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"message": "ok"})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as client:
+        response = await client.get("http://testserver/")
+        assert response.is_closed is True
+        assert isinstance(response.elapsed, timedelta)
+        assert response.elapsed >= timedelta(0)
